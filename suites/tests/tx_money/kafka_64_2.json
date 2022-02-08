@@ -1,0 +1,14 @@
+{
+    "name": "tx-money / kafka / 64.2",
+    "scenario": "kafka_money_scenario",
+    "accounts": 64,
+    "workload": {
+        "name": "tx-money / java",
+        "checks": [
+            { "name": "stat" }
+        ],
+        "settings": {
+            "producers":2
+        }
+    }
+}

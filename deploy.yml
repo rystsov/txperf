@@ -1,0 +1,383 @@
+- name: Setup common packages
+  hosts: all
+  become: true
+  tasks:
+    - name: Install packages
+      package:
+        name: 
+          - mdadm
+          - xfsprogs
+          - iotop
+          - sysstat
+        state: present
+        update_cache: true
+
+- name: set facts about drives
+  hosts: all
+  tasks:
+  - set_fact: 
+      device_info: "{{ hostvars[inventory_hostname].ansible_devices }}"
+      nvme_device_ids: "{{ hostvars[inventory_hostname].ansible_devices.keys() | map('regex_search', 'nvme.*') | select('string') | list }}"
+  - set_fact: 
+      nvme_devices_for_raid: '{{ (nvme_devices_for_raid | default([])) + ["/dev/" + item] }}'
+    loop: '{{ nvme_device_ids }}'
+    when: device_info[item]["partitions"] | length == 0
+
+- name: format raid drives if more then 2 drives
+  hosts: all
+  tasks:
+  - block: 
+    - name: define mdadm_arrays variable
+      set_fact:
+        mdadm_arrays:
+        - name: md0
+          devices: '{{ nvme_devices_for_raid }}'
+          filesystem: xfs
+          level: 0
+          mountpoint: /mnt/vectorized
+          state: present
+    - name: run mdadm
+      include_role: 
+        name: mrlesmithjr.mdadm
+    when: nvme_devices_for_raid|length > 1
+
+- name: created a non raid disk
+  hosts: all
+  tasks:
+    - block: 
+      - name: create xfs file system
+        filesystem: 
+          fstype: xfs
+          dev: '{{ nvme_devices_for_raid[0] }}'
+      - name: mount nvme device
+        mount:
+          path: /mnt/vectorized
+          src: '{{ nvme_devices_for_raid[0] }}'
+          fstype: xfs
+          state: mounted
+      when: nvme_devices_for_raid|length == 1
+
+- name: set disk permissions
+  hosts: all
+  tasks:
+  - file:
+      path: /mnt/vectorized
+      owner: ubuntu
+      group: ubuntu
+
+- name: write nodes files
+  hosts: all
+  tasks:
+  - shell: |
+      rm -rf /mnt/vectorized/redpanda.nodes
+      {% for host in groups['redpanda'] %}
+      echo "{{ hostvars[host].private_ip }} {{ groups['redpanda'].index(host) }}" >> /mnt/vectorized/redpanda.nodes
+      {% endfor %}
+      rm -rf /mnt/vectorized/client.nodes
+      {% for host in groups['client'] %}
+      echo "{{ hostvars[host].private_ip }} {{ groups['client'].index(host) }}" >> /mnt/vectorized/client.nodes
+      {% endfor %}
+
+- name: copy control scripts
+  hosts: redpanda:client
+  tasks:
+    - name: copy control scripts
+      copy:
+        src: control
+        dest: /mnt/vectorized/
+        mode: "preserve"
+        owner: ubuntu
+        group: ubuntu
+
+- name: install redpanda
+  hosts: redpanda:client:control
+  vars:
+    deb_path: "{{ lookup('env', 'DEB_PATH') }}"
+    deb_name: "{{ deb_path | basename }}"
+  tasks:
+    - name: Set nofile hard limit for ubuntu user
+      pam_limits:
+        domain: ubuntu
+        limit_type: hard
+        limit_item: nofile
+        value: 1048576
+    - name: Set nofile soft limit for ubuntu user
+      pam_limits:
+        domain: ubuntu
+        limit_type: soft
+        limit_item: nofile
+        value: 1048576
+    - name: copy deb
+      copy:
+        src: "{{ deb_path }}"
+        dest: /mnt/vectorized/{{ deb_name }}
+    - name: install deb
+      become_user: root
+      shell: |
+        dpkg --force-confold -i /mnt/vectorized/{{ deb_name }}
+    - name: disable redpanda systemd service
+      systemd:
+        name: redpanda
+        state: stopped
+        enabled: no
+
+- name: add monitoring dir
+  hosts: redpanda
+  tasks:
+    - file:
+        state: directory
+        path: /mnt/vectorized/monitoring
+        owner: ubuntu
+        group: ubuntu
+
+- name: configure redpanda
+  hosts: redpanda
+  tasks:
+    - name: create redpanda data dir
+      file:
+        state: directory
+        path: /mnt/vectorized/redpanda/data
+        owner: ubuntu
+        group: ubuntu
+    - name: create redpanda coredump dir
+      file:
+        state: directory
+        path: /mnt/vectorized/redpanda/coredump
+        owner: ubuntu
+        group: ubuntu
+    - name: configure redpanda
+      shell: |
+        {% if hostvars[groups['redpanda'][0]].id == hostvars[inventory_hostname].id %}
+        rpk config bootstrap \
+        --id {{ groups['redpanda'].index(inventory_hostname) }} \
+        --self {{ hostvars[inventory_hostname].private_ip }}
+        {% else %}
+        rpk config bootstrap \
+        --id {{ groups['redpanda'].index(inventory_hostname) }} \
+        --self {{ hostvars[inventory_hostname].private_ip }} \
+        --ips {{ hostvars[groups['redpanda'][0]].private_ip }}
+        {% endif %}
+        rpk config set redpanda.default_topic_partitions 1
+        rpk config set redpanda.default_topic_replications 3
+        rpk config set redpanda.transaction_coordinator_replication 3
+        rpk config set redpanda.id_allocator_replication 3
+        rpk config set redpanda.enable_leader_balancer true
+        rpk config set redpanda.enable_auto_rebalance_on_node_add false
+        rpk config set redpanda.enable_idempotence true
+        rpk config set redpanda.enable_transactions true
+        rpk config set redpanda.compacted_log_segment_size 1073741824
+        rpk config set redpanda.data_directory "/mnt/vectorized/redpanda/data"
+        rpk config set rpk.coredump_dir "/mnt/vectorized/redpanda/coredump"
+        rpk redpanda mode production
+        rpk redpanda tune all
+
+- name: install kafka
+  hosts: redpanda
+  tasks:
+    - name: install java
+      package: 
+        name: openjdk-11-jdk
+        state: present
+        update_cache: yes
+    - name: create kafka & zookeeper bin
+      file:
+        state: directory
+        path: /mnt/vectorized/bin
+        owner: ubuntu
+        group: ubuntu
+    - name: create zookeeper data dir
+      file:
+        state: directory
+        path: /mnt/vectorized/zookeeper
+        owner: ubuntu
+        group: ubuntu
+    - name: create kafka data dir
+      file:
+        state: directory
+        path: /mnt/vectorized/kafka
+        owner: ubuntu
+        group: ubuntu
+    - name: download kafka & zookeeper
+      shell: |
+        cd /mnt/vectorized/bin
+        wget https://downloads.apache.org/kafka/3.0.0/kafka_2.13-3.0.0.tgz
+        wget https://downloads.apache.org/zookeeper/zookeeper-3.7.0/apache-zookeeper-3.7.0-bin.tar.gz
+        tar xzf kafka_2.13-3.0.0.tgz
+        tar xzf apache-zookeeper-3.7.0-bin.tar.gz
+        sudo chown ubuntu:ubuntu -R /mnt/vectorized/bin
+    - name: configure kafka & zookeeper
+      shell: |
+        echo "tickTime=2000
+        initLimit=10
+        syncLimit=5
+        dataDir=/mnt/vectorized/zookeeper
+        clientPort=2181" > /mnt/vectorized/zoo.cfg
+        {% for host in groups['redpanda'] %}
+          {% if host == inventory_hostname %}
+            echo "{{ groups['redpanda'].index(host) }}" > /mnt/vectorized/myid
+            echo "server.{{ groups['redpanda'].index(host) }}=0.0.0.0:2888:3888" >> /mnt/vectorized/zoo.cfg
+          {% else %}
+            echo "server.{{ groups['redpanda'].index(host) }}={{ hostvars[host].private_ip }}:2888:3888" >> /mnt/vectorized/zoo.cfg
+          {% endif %}
+        {% endfor %}
+        echo "broker.id={{ groups['redpanda'].index(inventory_hostname) }}
+        num.network.threads=16
+        num.io.threads=16
+        socket.send.buffer.bytes=102400
+        socket.receive.buffer.bytes=102400
+        socket.request.max.bytes=104857600
+        log.dirs=/mnt/vectorized/kafka
+        num.partitions=1
+        num.replica.fetchers=16
+        message.max.bytes=10485760
+        replica.fetch.max.bytes=10485760
+        default.replication.factor=3
+        num.recovery.threads.per.data.dir=1
+        offsets.topic.replication.factor=3
+        offsets.topic.num.partitions=1
+        offsets.commit.required.acks=-1
+        transaction.state.log.replication.factor=3
+        transaction.state.log.min.isr=2
+        transaction.state.log.num.partitions=1
+        log.flush.interval.messages=1
+        log.flush.interval.ms=0
+        min.insync.replicas=2
+        log.retention.hours=168
+        log.segment.bytes=1073741824
+        log.retention.check.interval.ms=300000
+        zookeeper.connect={{ hostvars[inventory_hostname].private_ip }}:2181
+        zookeeper.connection.timeout.ms=18000
+        group.initial.rebalance.delay.ms=0
+        listeners=PLAINTEXT://{{ hostvars[inventory_hostname].private_ip }}:9092
+        advertised.listeners=PLAINTEXT://{{ hostvars[inventory_hostname].private_ip }}:9092" >> /mnt/vectorized/kafka.properties
+
+- name: upload ssh keys
+  hosts: control
+  tasks:
+    - name: check .ssh dir exists
+      file:
+        path: /home/ubuntu/.ssh
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: 0700
+    - name: copy keys
+      copy:
+        src: ./id_ed25519
+        dest: /home/ubuntu/.ssh/id_ed25519
+        owner: ubuntu
+        group: ubuntu
+        mode: 0600
+    - name: add redpanda nodes to known hosts
+      shell: |
+        {% for host in groups['redpanda'] %}
+        ssh-keyscan {{ hostvars[host].private_ip }} >> /home/ubuntu/.ssh/known_hosts
+        {% endfor %}
+    - name: add client nodes to known hosts
+      shell: |
+        {% for host in groups['client'] %}
+        ssh-keyscan {{ hostvars[host].private_ip }} >> /home/ubuntu/.ssh/known_hosts
+        {% endfor %}
+
+- name: install client dependencies
+  hosts: client
+  tasks:
+    - name: install pip
+      package: 
+        name: python3-pip
+        state: present
+        update_cache: yes
+    - name: add pip dependencies
+      become_user: root
+      shell: |
+        pip3 install sh
+        pip3 install flask
+        pip3 install confluent_kafka
+    - name: install java
+      package: 
+        name: openjdk-11-jdk
+        state: present
+        update_cache: yes
+    - name: install maven
+      package: 
+        name: maven
+        state: present
+        update_cache: yes
+
+- name: install control dependencies
+  hosts: control
+  tasks:
+    - name: install pip
+      package: 
+        name: python3-pip
+        state: present
+        update_cache: yes
+    - name: add pip dependencies
+      become_user: root
+      shell: |
+        pip3 install sh
+        pip3 install flask
+        pip3 install confluent_kafka
+    - name: install gnuplot
+      package: 
+        name: gnuplot
+        state: present
+        update_cache: yes
+    - name: create experiments dir
+      file:
+        state: directory
+        path: /mnt/vectorized/experiments
+        owner: ubuntu
+        group: ubuntu
+        recurse: true
+    - name: create faults dir
+      file:
+        state: directory
+        path: /mnt/vectorized/faults
+        owner: ubuntu
+        group: ubuntu
+        recurse: true
+    - name: copy chaos harness
+      copy:
+        src: harness
+        dest: /mnt/vectorized/
+        owner: ubuntu
+        group: ubuntu
+        mode: 0600
+    - name: copy test suite config
+      copy:
+        src: suites
+        dest: /mnt/vectorized/
+        owner: ubuntu
+        group: ubuntu
+        mode: 0600
+
+- name: preparing workload
+  hosts: client:control
+  tasks:
+    - name: copy workloads
+      copy:
+        src: workloads
+        dest: /mnt/vectorized/
+        owner: ubuntu
+        group: ubuntu
+        mode: 0600
+
+- name: building workload
+  hosts: client
+  tasks:
+    - name: create workloads/logs dir
+      file:
+        state: directory
+        path: /mnt/vectorized/workloads/logs
+        owner: ubuntu
+        group: ubuntu
+        recurse: true
+    - name: build writing/app
+      shell: |
+        cd /mnt/vectorized/workloads/tx-money
+        mvn clean dependency:copy-dependencies package
+        cd /mnt/vectorized/workloads/base-money
+        mvn clean dependency:copy-dependencies package
+        cd /mnt/vectorized/workloads/tx-subscribe
+        mvn clean dependency:copy-dependencies package

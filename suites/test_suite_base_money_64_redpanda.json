@@ -1,0 +1,26 @@
+{
+    "name": "all",
+    "tests": [
+        "base_money/redpanda_64_1.json",
+        "base_money/redpanda_64_2.json",
+        "base_money/redpanda_64_4.json",
+        "base_money/redpanda_64_8.json",
+        "base_money/redpanda_64_10.json",
+        "base_money/redpanda_64_16.json",
+        "base_money/redpanda_64_20.json",
+        "base_money/redpanda_64_30.json",
+        "base_money/redpanda_64_40.json",
+        "base_money/redpanda_64_50.json",
+        "base_money/redpanda_64_60.json",
+        "base_money/redpanda_64_70.json",
+        "base_money/redpanda_64_80.json",
+        "base_money/redpanda_64_90.json",
+        "base_money/redpanda_64_100.json",
+        "base_money/redpanda_64_120.json",
+        "base_money/redpanda_64_128.json"
+    ],
+    "settings": {
+        "remove_logs_on_success": true,
+        "skip_stat": true
+    }
+}

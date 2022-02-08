@@ -1,0 +1,14 @@
+{
+    "name": "tx-money / redpanda / 64.100",
+    "scenario": "redpanda_money_scenario",
+    "accounts": 64,
+    "workload": {
+        "name": "tx-money / java",
+        "checks": [
+            { "name": "stat" }
+        ],
+        "settings": {
+            "producers":100
+        }
+    }
+}

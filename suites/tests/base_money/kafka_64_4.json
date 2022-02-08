@@ -1,0 +1,14 @@
+{
+    "name": "base-money / kafka / 64.4",
+    "scenario": "kafka_money_scenario",
+    "accounts": 64,
+    "workload": {
+        "name": "base-money / java",
+        "checks": [
+            { "name": "stat" }
+        ],
+        "settings": {
+            "producers":4
+        }
+    }
+}
