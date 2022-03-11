@@ -1,0 +1,10 @@
+- name: deploy.yml
+  hosts: control
+  tasks:
+    - become_user: ubuntu
+      shell: |
+        cd /home/ubuntu/txperf
+        . /home/ubuntu/aws.sh
+        ansible-playbook deploy.yml --key-file id_ed25519
+      async: 36000
+      poll: 10

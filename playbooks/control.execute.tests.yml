@@ -1,0 +1,12 @@
+- name: control.execute.tests.sh
+  hosts: control
+  tasks:
+    - become_user: ubuntu
+      shell: |
+        cp -r /home/ubuntu/txperf /mnt/vectorized/
+        cd /mnt/vectorized/txperf
+        chmod 400 /mnt/vectorized/txperf/id_ed25519
+        chmod 400 /mnt/vectorized/txperf/id_ed25519.pub
+        ./playbooks/control.execute.tests.sh
+      async: 36000
+      poll: 10

@@ -116,8 +116,6 @@ class KafkaSubscribeScenario:
 
         for node in self.workload_cluster.nodes:
             self.workload_cluster.emit_event(node, "measured")
-
-        self.fetch_workload_logs()
     
     def execute(self, config, experiment_id):
         try:
@@ -202,6 +200,9 @@ class KafkaSubscribeScenario:
         self.kafka_cluster.create_topic(self.source, self.replication, self.partitions)
         logger.info(f"creating \"{self.target}\" topic with replication factor {self.replication} & {self.partitions} partitions")
         self.kafka_cluster.create_topic(self.target, self.replication, self.partitions)
+
+        logger.info(f"Waiting for 60s to let topics to be created")
+        sleep(60)
 
         logger.info(f"launching workload service")
         self.workload_cluster.launch_everywhere()

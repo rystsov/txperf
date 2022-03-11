@@ -1,0 +1,50 @@
+- name: copy redpanda
+  hosts: control
+  vars:
+    deb_path: "{{ lookup('env', 'DEB_PATH') }}"
+    deb_name: "{{ deb_path | basename }}"
+  tasks:
+    - copy:
+        src: "{{ deb_path }}"
+        dest: /home/ubuntu/{{ deb_name }}
+    - shell: |
+        echo "#!/bin/bash" > aws.sh
+        echo "export DEB_PATH=/home/ubuntu/{{ deb_name }}" >> aws.sh
+
+- name: install ansible
+  hosts: control
+  tasks:
+    - become_user: ubuntu
+      shell: |
+        sudo apt update
+        sudo apt install software-properties-common -y
+        sudo add-apt-repository --yes --update ppa:ansible/ansible
+        sudo apt install ansible -y
+        ansible-galaxy install mrlesmithjr.mdadm
+        sudo apt install jq -y
+
+- name: clone txperf
+  hosts: control
+  tasks:
+    - become_user: ubuntu
+      shell: |
+        git clone https://github.com/rystsov/txperf
+
+- name: clone keys & host.ini
+  hosts: control
+  tasks:
+    - copy:
+        owner: ubuntu
+        group: ubuntu
+        src: "hosts.ini"
+        dest: /home/ubuntu/txperf/hosts.ini
+    - copy:
+        owner: ubuntu
+        group: ubuntu
+        src: "id_ed25519"
+        dest: /home/ubuntu/txperf/id_ed25519
+    - copy:
+        owner: ubuntu
+        group: ubuntu
+        src: "id_ed25519.pub"
+        dest: /home/ubuntu/txperf/id_ed25519.pub
