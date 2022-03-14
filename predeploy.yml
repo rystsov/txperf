@@ -41,10 +41,12 @@
     - copy:
         owner: ubuntu
         group: ubuntu
+        mode: "preserve"
         src: "id_ed25519"
         dest: /home/ubuntu/txperf/id_ed25519
     - copy:
         owner: ubuntu
         group: ubuntu
+        mode: "preserve"
         src: "id_ed25519.pub"
         dest: /home/ubuntu/txperf/id_ed25519.pub
