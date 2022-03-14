@@ -193,11 +193,21 @@ class KafkaSubscribeScenario:
         self.kafka_cluster.launch_everywhere()
         self.kafka_cluster.wait_alive(timeout_s=20)
 
-        logger.info(f"sleeping for 5s to let kafka start")
-        sleep(5)
+        logger.info(f"sleeping for 30s to let kafka start")
+        sleep(30)
 
-        logger.info(f"creating \"{self.source}\" topic with replication factor {self.replication} & {self.partitions} partitions")
-        self.kafka_cluster.create_topic(self.source, self.replication, self.partitions)
+        retries = 3
+        while True:
+            retries-=1
+            logger.info(f"creating \"{self.source}\" topic with replication factor {self.replication} & {self.partitions} partitions")
+            try:
+                self.kafka_cluster.create_topic(self.source, self.replication, self.partitions)
+                break
+            except:
+                if retries>0:
+                    sleep(10)
+                    continue
+                raise
         logger.info(f"creating \"{self.target}\" topic with replication factor {self.replication} & {self.partitions} partitions")
         self.kafka_cluster.create_topic(self.target, self.replication, self.partitions)
 
