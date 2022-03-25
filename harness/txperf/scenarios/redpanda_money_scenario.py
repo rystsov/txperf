@@ -208,8 +208,17 @@ class RedpandaMoneyScenario:
         self.redpanda_cluster.wait_leader("controller", namespace="redpanda", replication=len(self.redpanda_cluster.nodes), timeout_s=30)
 
         for i in range(0, accounts):
-            logger.info(f"creating \"acc{i}\" topic with replication factor 3")
-            self.redpanda_cluster.create_topic(f"acc{i}", 3, 1)
+            retries = 5
+            while True:
+                retries -= 1
+                try:
+                    logger.info(f"creating \"acc{i}\" topic with replication factor 3")
+                    self.redpanda_cluster.create_topic(f"acc{i}", 3, 1)
+                    break
+                except:
+                    if retries <= 0:
+                        raise
+                    sleep(5)
         for i in range(0, accounts):
             # waiting for the topic to come online
             self.redpanda_cluster.wait_leader(f"acc{i}", replication=3, timeout_s=20)
