@@ -215,8 +215,8 @@ class KafkaMoneyScenario:
         self.kafka_cluster.launch_everywhere()
         self.kafka_cluster.wait_alive(timeout_s=20)
 
-        logger.info(f"sleeping for 5s to let kafka start")
-        sleep(5)
+        logger.info(f"sleeping for 30s to let kafka start")
+        sleep(30)
 
         for i in range(0, accounts):
             logger.info(f"creating \"acc{i}\" topic with replication factor 3")
