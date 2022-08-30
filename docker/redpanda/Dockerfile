@@ -18,9 +18,9 @@ COPY id_ed25519.pub /home/ubuntu/.ssh/authorized_keys
 RUN mkdir -p /mnt/vectorized
 RUN mkdir -p /mnt/vectorized/bin
 RUN cd /mnt/vectorized/bin && wget https://downloads.apache.org/kafka/3.0.1/kafka_2.13-3.0.1.tgz
-RUN cd /mnt/vectorized/bin && wget https://downloads.apache.org/zookeeper/zookeeper-3.7.0/apache-zookeeper-3.7.0-bin.tar.gz
+RUN cd /mnt/vectorized/bin && wget https://downloads.apache.org/zookeeper/zookeeper-3.8.0/apache-zookeeper-3.8.0-bin.tar.gz
 RUN cd /mnt/vectorized/bin && tar xzf kafka_2.13-3.0.1.tgz
-RUN cd /mnt/vectorized/bin && tar xzf apache-zookeeper-3.7.0-bin.tar.gz
+RUN cd /mnt/vectorized/bin && tar xzf apache-zookeeper-3.8.0-bin.tar.gz
 COPY control /mnt/vectorized/control
 RUN chown ubuntu:ubuntu -R /mnt/vectorized
 COPY docker/redpanda/entrypoint.sh /mnt/vectorized/entrypoint.sh

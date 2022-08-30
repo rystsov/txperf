@@ -201,9 +201,9 @@
       shell: |
         cd /mnt/vectorized/bin
         wget https://downloads.apache.org/kafka/3.0.1/kafka_2.13-3.0.1.tgz
-        wget https://downloads.apache.org/zookeeper/zookeeper-3.7.0/apache-zookeeper-3.7.0-bin.tar.gz
+        wget https://downloads.apache.org/zookeeper/zookeeper-3.8.0/apache-zookeeper-3.8.0-bin.tar.gz
         tar xzf kafka_2.13-3.0.1.tgz
-        tar xzf apache-zookeeper-3.7.0-bin.tar.gz
+        tar xzf apache-zookeeper-3.8.0-bin.tar.gz
         sudo chown ubuntu:ubuntu -R /mnt/vectorized/bin
     - name: configure kafka & zookeeper
       shell: |
