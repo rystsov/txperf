@@ -46,9 +46,17 @@ class Workload:
             ssh("ubuntu@" + node.ip, "/mnt/vectorized/control/network.heal.all.sh")
     
     def is_alive(self, node):
-        ip = node.ip
-        result = ssh("ubuntu@"+ip, self.scripts.alive)
-        return "YES" in result
+        attempt = 0
+        while True:
+            attempt += 1
+            try:
+                ip = node.ip
+                result = ssh("ubuntu@"+ip, self.scripts.alive)
+                return "YES" in result
+            except:
+                if attempt>5:
+                    raise
+            sleep(1)
     
     def launch(self, node):
         ip = node.ip
