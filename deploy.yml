@@ -375,9 +375,5 @@
         recurse: true
     - name: build writing/app
       shell: |
-        cd /mnt/vectorized/workloads/tx-money
-        mvn clean dependency:copy-dependencies package
-        cd /mnt/vectorized/workloads/base-money
-        mvn clean dependency:copy-dependencies package
-        cd /mnt/vectorized/workloads/tx-subscribe
+        cd /mnt/vectorized/workloads
         mvn clean dependency:copy-dependencies package

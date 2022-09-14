@@ -1,4 +1,4 @@
-package io.vectorized;
+package io.vectorized.tx_money;
 
 import com.google.gson.Gson;
 import java.io.*;
@@ -10,6 +10,7 @@ import spark.*;
 public class App
 {
     public static class WorkflowSettings {
+        public int producers = 1;
         public int retries = 5;
     }
     
@@ -17,10 +18,7 @@ public class App
         public String experiment;
         public String server;
         public String brokers;
-        public String source;
-        public String target;
-        public String group_id;
-        public int partitions;
+        public int accounts;
         public WorkflowSettings settings;
     }
 

@@ -26,11 +26,7 @@ RUN pip3 install flask
 RUN pip3 install confluent_kafka
 RUN mkdir -p /mnt/vectorized/workloads
 COPY workloads /mnt/vectorized/workloads
-RUN cd /mnt/vectorized/workloads/tx-money && \
-    mvn clean dependency:copy-dependencies package
-RUN cd /mnt/vectorized/workloads/tx-subscribe && \
-    mvn clean dependency:copy-dependencies package
-RUN cd /mnt/vectorized/workloads/base-money && \
+RUN cd /mnt/vectorized/workloads && \
     mvn clean dependency:copy-dependencies package
 RUN chown ubuntu:ubuntu -R /mnt/vectorized/workloads
 CMD /mnt/vectorized/entrypoint.sh
