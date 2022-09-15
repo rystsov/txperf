@@ -24,7 +24,7 @@ logger = logging.getLogger("txperf")
 
 class KafkaMoneyScenario:
     SUPPORTED_WORKLOADS = {
-        "tx-money / java", "base-money / java"
+        "tx-money / java", "base-money / java", "multi-write / java"
     }
 
     def __init__(self):
