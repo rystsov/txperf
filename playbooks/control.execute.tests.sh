@@ -16,6 +16,6 @@ fetch_logs () {
     rm experiments.tar.gz
 }
 
-echo "$(date) test_suite_tx_money_64_redpanda" >> log
-ansible-playbook playbooks/test.suite.yml --key-file id_ed25519 -e suite_path=test_suite_tx_money_64_redpanda.json
-fetch_logs "results/tx-money-redpanda-64"
+echo "$(date) test_suite_multi_write_64_redpanda" >> log
+ansible-playbook playbooks/test.suite.yml --key-file id_ed25519 -e suite_path=test_suite_multi_write_64_redpanda.json
+fetch_logs "results/multi_write-redpanda-64"

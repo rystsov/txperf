@@ -1,0 +1,26 @@
+{
+    "name": "all",
+    "tests": [
+        "multi_write/kafka_64_1.json",
+        "multi_write/kafka_64_2.json",
+        "multi_write/kafka_64_4.json",
+        "multi_write/kafka_64_8.json",
+        "multi_write/kafka_64_10.json",
+        "multi_write/kafka_64_16.json",
+        "multi_write/kafka_64_20.json",
+        "multi_write/kafka_64_30.json",
+        "multi_write/kafka_64_40.json",
+        "multi_write/kafka_64_50.json",
+        "multi_write/kafka_64_60.json",
+        "multi_write/kafka_64_70.json",
+        "multi_write/kafka_64_80.json",
+        "multi_write/kafka_64_90.json",
+        "multi_write/kafka_64_100.json",
+        "multi_write/kafka_64_120.json",
+        "multi_write/kafka_64_128.json"
+    ],
+    "settings": {
+        "remove_logs_on_success": true,
+        "skip_stat": true
+    }
+}

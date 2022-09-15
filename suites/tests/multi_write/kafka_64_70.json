@@ -1,0 +1,14 @@
+{
+    "name": "multi-write / kafka / 64.70",
+    "scenario": "kafka_money_scenario",
+    "accounts": 64,
+    "workload": {
+        "name": "multi-write / java",
+        "checks": [
+            { "name": "stat" }
+        ],
+        "settings": {
+            "producers":70
+        }
+    }
+}

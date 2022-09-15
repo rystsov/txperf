@@ -24,3 +24,4 @@ __pycache__
 history/
 __init__.pyc
 log
+results*
