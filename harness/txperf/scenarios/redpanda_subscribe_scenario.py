@@ -264,7 +264,7 @@ class RedpandaSubscribeScenario:
         self.redpanda_cluster.wait_leader("tx", namespace="kafka_internal", replication=3, timeout_s=10)
         init_group(self.redpanda_cluster.brokers(), self.config["group_id"], "init", timeout_s=10)
         logger.info(f"waiting for group coordinator")
-        self.redpanda_cluster.wait_leader("group", namespace="kafka_internal", replication=3, timeout_s=20)
+        self.redpanda_cluster.wait_leader("__consumer_offsets", namespace="kafka", replication=3, timeout_s=20)
 
         sleep(5)
 

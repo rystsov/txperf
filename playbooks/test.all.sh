@@ -24,6 +24,7 @@ echo "execute tests"
 ansible-playbook playbooks/control.execute.tests.yml --key-file id_ed25519
 
 ssh -i ./id_ed25519 ubuntu@$control tar -czf /mnt/vectorized/txperf/results.tar.gz -C /mnt/vectorized/txperf results
-scp -i id_ed25519 -r ubuntu@$control:/mnt/vectorized/txperf/results.tar.gz results.tar.gz
+scp -i ./id_ed25519 -r ubuntu@$control:/mnt/vectorized/txperf/results.tar.gz results.tar.gz
 
 terraform destroy -var="username=$AWS_CHAOS_RESOURCE_PREFIX" -var="redpanda_cluster_size=3" -var="workload_cluster_size=2" -auto-approve
+
