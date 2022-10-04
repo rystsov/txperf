@@ -20,6 +20,7 @@ docker/bind_mounts/
 workloads/tx-money/target/
 workloads/base-money/target/
 workloads/tx-subscribe/target/
+workloads/target
 __pycache__
 history/
 __init__.pyc

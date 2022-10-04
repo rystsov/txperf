@@ -200,7 +200,7 @@ class LogPlayer:
                 raise Exception(f"unknown transition {self.curr_state[thread_id]} -> {new_state}")
             self.curr_state[thread_id] = new_state
 
-        if self.thread_type[thread_id] == "executing":
+        if self.thread_type[thread_id] == "streaming":
             self.executing_apply(thread_id, parts)
 
 class StatInfo:

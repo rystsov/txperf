@@ -12,6 +12,7 @@ class State(Enum):
     EVENT = 8
     ABORT = 9
     LOG = 10
+    P1000 = 11
 
 cmds = {
     "started": State.STARTED,
@@ -23,24 +24,22 @@ cmds = {
     "ok": State.OK,
     "err": State.ERROR,
     "event": State.EVENT,
-    "log": State.LOG
+    "log": State.LOG,
+    "+1000": State.P1000
 }
 
 threads = {
     "producing": {
         State.STARTED: [State.CONSTRUCTING],
         State.CONSTRUCTING: [State.CONSTRUCTED, State.ERROR],
-        State.CONSTRUCTED: [State.CONSTRUCTING],
+        State.CONSTRUCTED: [State.CONSTRUCTING, State.P1000],
+        State.P1000: [State.P1000, State.ERROR, State.CONSTRUCTING],
         State.ERROR: [State.CONSTRUCTING]
     },
     "streaming": {
         State.STARTED: [State.CONSTRUCTING],
         State.CONSTRUCTING: [State.CONSTRUCTED, State.ERROR],
-        State.CONSTRUCTED: [State.CONSTRUCTING],
-        State.ERROR: [State.CONSTRUCTING]
-    },
-    "executing": {
-        State.STARTED: [State.TX],
+        State.CONSTRUCTED: [State.CONSTRUCTING, State.TX],
         State.TX: [State.ABORT, State.COMMIT, State.ERROR],
         State.ABORT: [State.OK, State.ERROR],
         State.COMMIT: [State.OK, State.ERROR],

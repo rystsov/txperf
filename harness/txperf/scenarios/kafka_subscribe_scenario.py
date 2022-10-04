@@ -196,20 +196,22 @@ class KafkaSubscribeScenario:
         logger.info(f"sleeping for 30s to let kafka start")
         sleep(30)
 
-        retries = 3
-        while True:
-            retries-=1
-            logger.info(f"creating \"{self.source}\" topic with replication factor {self.replication} & {self.partitions} partitions")
-            try:
-                self.kafka_cluster.create_topic(self.source, self.replication, self.partitions)
-                break
-            except:
-                if retries>0:
-                    sleep(10)
-                    continue
-                raise
-        logger.info(f"creating \"{self.target}\" topic with replication factor {self.replication} & {self.partitions} partitions")
-        self.kafka_cluster.create_topic(self.target, self.replication, self.partitions)
+        for i in range(0, self.partitions):
+            retries = 3
+            while True:
+                retries-=1
+                logger.info(f"creating \"{self.source}{i}\" topic with replication factor {self.replication}")
+                try:
+                    self.kafka_cluster.create_topic(f"{self.source}{i}", self.replication, 1)
+                    break
+                except:
+                    if retries>0:
+                        sleep(10)
+                        continue
+                    raise
+        for i in range(0, self.partitions):
+            logger.info(f"creating \"{self.target}{i}\" topic with replication factor {self.replication}")
+            self.redpanda_cluster.create_topic(f"{self.target}{i}", self.replication, 1)
 
         logger.info(f"Waiting for 60s to let topics to be created")
         sleep(60)
@@ -218,11 +220,22 @@ class KafkaSubscribeScenario:
         self.workload_cluster.launch_everywhere()
         self.workload_cluster.wait_alive(timeout_s=10)
         sleep(10)
-        self.workload_cluster.wait_ready(timeout_s=20)
+        self.workload_cluster.wait_ready(timeout_s=40)
 
-        for node in self.workload_cluster.nodes:
+        for n in range(len(self.workload_cluster.nodes)):
+            node=self.workload_cluster.nodes[n]
+            r = list(range(0, int(self.partitions / 2))) if n==0 else list(range(int(self.partitions / 2), self.partitions))
             logger.info(f"init workload with brokers=\"{self.redpanda_cluster.brokers()}\", source=\"{self.source}\", target=\"{self.target}\" & group_ip=\"{self.config['group_id']}\" on {node.ip}")
-            self.workload_cluster.init(node, node.ip, self.redpanda_cluster.brokers(), self.source, self.partitions, self.target, self.config['group_id'], self.config['experiment_id'], self.config["workload"]["settings"])
+            self.workload_cluster.init(node, node.ip, self.redpanda_cluster.brokers(), self.source, self.partitions, r, self.target, self.config['group_id'], self.config['experiment_id'], self.config["workload"]["settings"])
+
+        node = self.workload_cluster.nodes[0]
+        logger.info(f"starting filling workload on {node.ip}")
+        self.workload_cluster.start_filling(node)
+        logger.info(f"waiting until filled")
+        self.workload_cluster.wait_filled(node, count=4*60*250, timeout_s=4*60)
+        logger.info(f"stopping filling")
+        self.workload_cluster.stop_filling(node, timeout_s=60)
+        logger.info(f"filling is stopped")
 
         for node in self.workload_cluster.nodes:
             logger.info(f"starting workload on {node.ip}")
@@ -233,5 +246,5 @@ class KafkaSubscribeScenario:
         logger.info(f"waiting for progress")
         self.workload_cluster.wait_progress(timeout_s=30, selector=Selector.ANY)
         
-        logger.info(f"warming up for 60s")
-        sleep(60)
+        logger.info(f"warming up for 20s")
+        sleep(20)

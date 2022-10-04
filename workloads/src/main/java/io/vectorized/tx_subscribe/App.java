@@ -9,10 +9,6 @@ import spark.*;
 
 public class App
 {
-    public static class WorkflowSettings {
-        public int retries = 5;
-    }
-    
     public static class InitBody {
         public String experiment;
         public String server;
@@ -21,31 +17,40 @@ public class App
         public String target;
         public String group_id;
         public int partitions;
-        public WorkflowSettings settings;
+        public int[] range;
     }
 
     public static class OpsInfo {
         public long succeeded_ops = 0;
         public long failed_ops = 0;
         public long timedout_ops = 0;
+        public long ticks = 0;
+        public long empty_ticks = 0;
+        public long produced = 0;
 
         public OpsInfo copy() {
             var value = new OpsInfo();
             value.succeeded_ops = succeeded_ops;
             value.failed_ops = failed_ops;
             value.timedout_ops = timedout_ops;
+            value.ticks = ticks;
+            value.empty_ticks = empty_ticks;
+            value.produced = produced;
             return value;
         }
     }
 
     public static class Info extends OpsInfo {
         public boolean is_active;
+        public boolean is_filling;
         public HashMap<String, OpsInfo> threads = new HashMap<>();
     }
 
     static enum State {
         FRESH,
         INITIALIZED,
+        FILLED,
+        FILLING,
         STARTED,
         STOPPED
     }
@@ -73,22 +78,36 @@ public class App
         });
 
         get("/info", "application/json", (req, res) -> {
-            var info = new Info();
-            info.is_active = false;
-            info.failed_ops = 0;
-            info.succeeded_ops = 0;
-            info.timedout_ops = 0;
-            if (workload != null) {
-                info.is_active = workload.is_active;
-                info.threads = workload.get_ops_info();
-                for (String key : info.threads.keySet()) {
-                    var value = info.threads.get(key);
-                    info.succeeded_ops += value.succeeded_ops;
-                    info.failed_ops += value.failed_ops;
-                    info.timedout_ops += value.timedout_ops;
+            try {
+                var info = new Info();
+                info.is_active = false;
+                info.is_filling = false;
+                info.failed_ops = 0;
+                info.succeeded_ops = 0;
+                info.timedout_ops = 0;
+                info.ticks = 0;
+                info.empty_ticks = 0;
+                info.produced = 0;
+                if (workload != null) {
+                    info.is_active = workload.is_active;
+                    info.is_filling = workload.is_filling;
+                    info.threads = workload.get_ops_info();
+                    for (String key : info.threads.keySet()) {
+                        var value = info.threads.get(key);
+                        info.succeeded_ops += value.succeeded_ops;
+                        info.failed_ops += value.failed_ops;
+                        info.timedout_ops += value.timedout_ops;
+                        info.ticks += value.ticks;
+                        info.empty_ticks += value.empty_ticks;
+                        info.produced += value.produced;
+                    }
                 }
+                return info;
+            } catch (Exception e) {
+                System.out.println(e);
+                e.printStackTrace();
+                throw e;
             }
-            return info;
         }, new JsonTransformer());
 
         post("/init", (req, res) -> {
@@ -97,17 +116,14 @@ public class App
                     throw new Exception("Unexpected state: " + state);
                 }
                 state = State.INITIALIZED;
-    
                 Gson gson = new Gson();
-                
                 System.out.println(req.body());
                 params = gson.fromJson(req.body(), InitBody.class);
                 File root = new File(params.experiment);
-    
                 if (!root.mkdir()) {
                     throw new Exception("Can't create folder: " + params.experiment);
                 }
-                
+                workload = new Workload(params);
                 res.status(200);
                 return "";
             } catch (Exception e) {
@@ -123,19 +139,55 @@ public class App
             res.status(200);
             return "";
         });
-        
-        post("/start", (req, res) -> {
+
+        post("/startFilling", (req, res) -> {
             if (state != State.INITIALIZED) {
                 throw new Exception("Unexpected state: " + state);
             }
-            state = State.STARTED;
+            state = State.FILLING;
+            try {
+                workload.startFilling();
+                res.status(200);
+                return "";
+            } catch (Exception e) {
+                System.out.println(e);
+                e.printStackTrace();
+                throw e;
+            }
+        });
 
-            workload = new Workload(params);
-            workload.start();
-            
-            //curl -X POST http://127.0.0.1:8080/start -H 'Content-Type: application/json' -d '{"topic":"topic1","brokers":"127.0.0.1:9092"}'
-            res.status(200);
-            return "";
+        post("/stopFilling", (req, res) -> {
+            if (state != State.FILLING) {
+                throw new Exception("Unexpected state: " + state);
+            }
+            state = State.FILLED;
+            try {
+                workload.stopFilling();
+                res.status(200);
+                return "";
+            } catch (Exception e) {
+                System.out.println(e);
+                e.printStackTrace();
+                throw e;
+            }
+        });
+        
+        post("/start", (req, res) -> {
+            try {
+                if (state != State.FILLED && state != State.INITIALIZED) {
+                    throw new Exception("Unexpected state: " + state);
+                }
+                state = State.STARTED;
+                workload.start();
+                
+                //curl -X POST http://127.0.0.1:8080/start -H 'Content-Type: application/json' -d '{"topic":"topic1","brokers":"127.0.0.1:9092"}'
+                res.status(200);
+                return "";
+            } catch (Exception e) {
+                System.out.println(e);
+                e.printStackTrace();
+                throw e;
+            }
         });
 
         post("/stop", (req, res) -> {

@@ -22,7 +22,11 @@ class Info:
         self.succeeded_ops = 0
         self.failed_ops = 0
         self.timedout_ops = 0
-        self.is_active = 0
+        self.is_active = False
+        self.is_filling = False
+        self.ticks = 0
+        self.empty_ticks = 0
+        self.produced = 0
 
 class Control:
     def __init__(self):
@@ -110,6 +114,19 @@ class Workload:
                     if not self.is_alive(node):
                         logger.error(f"workload process on {node.ip} (id={node.id}) died")
                         raise
+                sleep(1)
+    
+    def wait_filled(self, node, count, timeout_s=10):
+        begin = time.time()
+        started=self.info(node)
+        while True:
+            if time.time() - begin > timeout_s:
+                raise TimeoutException(f"workload haven't done progress within {timeout_s} sec")
+            info = self.info(node)
+            logger.debug(f"node {node.ip} filled {info.produced - started.produced} of {count} records")
+            if info.produced - started.produced > count:
+                return
+            sleep(1)
     
     def wait_progress(self, timeout_s=10, selector : Selector = Selector.ALL):
         begin = time.time()
@@ -143,7 +160,7 @@ class Workload:
         if r.status_code != 200:
             raise Exception(f"unexpected status code: {r.status_code}")
 
-    def init(self, node, server, brokers, source, partitions, target, group_id, experiment, settings, timeout_s=10):
+    def init(self, node, server, brokers, source, partitions, r, target, group_id, experiment, settings, timeout_s=10):
         ip = node.ip
         r = requests.post(f"http://{ip}:8080/init", json={
             "experiment": experiment,
@@ -152,6 +169,7 @@ class Workload:
             "target": target,
             "group_id": group_id,
             "partitions": partitions,
+            "range": r,
             "brokers": brokers,
             "settings": settings}, timeout=timeout_s)
         if r.status_code != 200:
@@ -160,6 +178,18 @@ class Workload:
     def start(self, node, timeout_s=10):
         ip = node.ip
         r = requests.post(f"http://{ip}:8080/start", timeout=timeout_s)
+        if r.status_code != 200:
+            raise Exception(f"unexpected status code: {r.status_code}")
+    
+    def start_filling(self, node, timeout_s=10):
+        ip = node.ip
+        r = requests.post(f"http://{ip}:8080/startFilling", timeout=timeout_s)
+        if r.status_code != 200:
+            raise Exception(f"unexpected status code: {r.status_code}")
+    
+    def stop_filling(self, node, timeout_s=10):
+        ip = node.ip
+        r = requests.post(f"http://{ip}:8080/stopFilling", timeout=timeout_s)
         if r.status_code != 200:
             raise Exception(f"unexpected status code: {r.status_code}")
 
@@ -179,6 +209,9 @@ class Workload:
         info.failed_ops = r.json()["failed_ops"]
         info.timedout_ops = r.json()["timedout_ops"]
         info.is_active = r.json()["is_active"]
+        info.ticks = r.json()["ticks"]
+        info.empty_ticks = r.json()["empty_ticks"]
+        info.produced = r.json()["produced"]
         return info
     
     def ping(self, node):
