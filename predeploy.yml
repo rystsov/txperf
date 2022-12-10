@@ -29,6 +29,8 @@
     - become_user: ubuntu
       shell: |
         git clone https://github.com/rystsov/txperf
+        cd txperf
+        git checkout parallel_add
 
 - name: clone keys & host.ini
   hosts: control
