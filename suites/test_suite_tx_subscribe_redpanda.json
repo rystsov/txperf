@@ -12,7 +12,14 @@
         "tx_subscribe/redpanda_40.json",
         "tx_subscribe/redpanda_50.json",
         "tx_subscribe/redpanda_60.json",
-        "tx_subscribe/redpanda_64.json"
+        "tx_subscribe/redpanda_64.json",
+        "tx_subscribe/redpanda_80.json",
+        "tx_subscribe/redpanda_100.json",
+        "tx_subscribe/redpanda_120.json",
+        "tx_subscribe/redpanda_140.json",
+        "tx_subscribe/redpanda_160.json",
+        "tx_subscribe/redpanda_180.json",
+        "tx_subscribe/redpanda_200.json"
     ],
     "settings": {
         "remove_logs_on_success": true,

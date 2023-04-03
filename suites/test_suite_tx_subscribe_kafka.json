@@ -12,7 +12,14 @@
         "tx_subscribe/kafka_40.json",
         "tx_subscribe/kafka_50.json",
         "tx_subscribe/kafka_60.json",
-        "tx_subscribe/kafka_64.json"
+        "tx_subscribe/kafka_64.json",
+        "tx_subscribe/kafka_80.json",
+        "tx_subscribe/kafka_100.json",
+        "tx_subscribe/kafka_120.json",
+        "tx_subscribe/kafka_140.json",
+        "tx_subscribe/kafka_160.json",
+        "tx_subscribe/kafka_180.json",
+        "tx_subscribe/kafka_200.json"
     ],
     "settings": {
         "remove_logs_on_success": true,
