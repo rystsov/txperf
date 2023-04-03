@@ -20,9 +20,9 @@ fetch_logs () {
 # ansible-playbook playbooks/test.suite.yml --key-file id_ed25519 -e suite_path=test_suite_multi_write_64_redpanda.json
 # fetch_logs "results/multi_write-redpanda-64"
  
-# echo "$(date) test_suite_tx_money_64_redpanda" >> log
-# ansible-playbook playbooks/test.suite.yml --key-file id_ed25519 -e suite_path=test_suite_tx_money_64_redpanda.json
-# fetch_logs "results/tx-money-redpanda-64"
+echo "$(date) test_suite_tx_money_64_redpanda" >> log
+ansible-playbook playbooks/test.suite.yml --key-file id_ed25519 -e suite_path=test_suite_tx_money_64_redpanda.json
+fetch_logs "results/tx-money-redpanda-64"
 
 # echo "$(date) test_suite_tx_subscribe_redpanda" >> log
 # ansible-playbook playbooks/test.suite.yml --key-file id_ed25519 -e suite_path=test_suite_tx_subscribe_redpanda.json
@@ -40,10 +40,10 @@ fetch_logs () {
 # ansible-playbook playbooks/test.suite.yml --key-file id_ed25519 -e suite_path=test_suite_tx_money_64_kafka.json
 # fetch_logs "results/tx-money-kafka-64"
 
-echo "$(date) test_suite_tx_subscribe_kafka" >> log
-ansible-playbook playbooks/test.suite.yml --key-file id_ed25519 -e suite_path=test_suite_tx_subscribe_kafka.json
-fetch_logs "results/tx-subscribe-kafka"
+# echo "$(date) test_suite_tx_subscribe_kafka" >> log
+# ansible-playbook playbooks/test.suite.yml --key-file id_ed25519 -e suite_path=test_suite_tx_subscribe_kafka.json
+# fetch_logs "results/tx-subscribe-kafka"
 
-echo "$(date) test_suite_base_money_64_kafka" >> log
-ansible-playbook playbooks/test.suite.yml --key-file id_ed25519 -e suite_path=test_suite_base_money_64_kafka.json
-fetch_logs "results/base-money-kafka-64"
+# echo "$(date) test_suite_base_money_64_kafka" >> log
+# ansible-playbook playbooks/test.suite.yml --key-file id_ed25519 -e suite_path=test_suite_base_money_64_kafka.json
+# fetch_logs "results/base-money-kafka-64"
