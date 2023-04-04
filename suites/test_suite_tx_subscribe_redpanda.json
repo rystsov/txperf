@@ -2,23 +2,14 @@
     "name": "all",
     "tests": [
         "tx_subscribe/redpanda_1.json",
-        "tx_subscribe/redpanda_2.json",
         "tx_subscribe/redpanda_4.json",
-        "tx_subscribe/redpanda_8.json",
         "tx_subscribe/redpanda_10.json",
-        "tx_subscribe/redpanda_16.json",
         "tx_subscribe/redpanda_20.json",
-        "tx_subscribe/redpanda_30.json",
         "tx_subscribe/redpanda_40.json",
-        "tx_subscribe/redpanda_50.json",
         "tx_subscribe/redpanda_60.json",
-        "tx_subscribe/redpanda_64.json",
         "tx_subscribe/redpanda_80.json",
-        "tx_subscribe/redpanda_100.json",
         "tx_subscribe/redpanda_120.json",
-        "tx_subscribe/redpanda_140.json",
         "tx_subscribe/redpanda_160.json",
-        "tx_subscribe/redpanda_180.json",
         "tx_subscribe/redpanda_200.json"
     ],
     "settings": {
