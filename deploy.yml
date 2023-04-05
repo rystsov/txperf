@@ -167,6 +167,7 @@
         rpk config set redpanda.enable_transactions true
         rpk config set redpanda.compacted_log_segment_size 1073741824
         rpk config set redpanda.group_topic_partitions 16
+        rpk config set redpanda.transaction_coordinator_partitions 50
         rpk config set redpanda.data_directory "/mnt/vectorized/redpanda/data"
         rpk config set rpk.coredump_dir "/mnt/vectorized/redpanda/coredump"
         rpk redpanda mode production
@@ -239,7 +240,7 @@
         offsets.commit.required.acks=-1
         transaction.state.log.replication.factor=3
         transaction.state.log.min.isr=2
-        transaction.state.log.num.partitions=16
+        transaction.state.log.num.partitions=50
         log.flush.interval.messages=1
         log.flush.interval.ms=0
         min.insync.replicas=2
