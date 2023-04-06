@@ -1,6 +1,8 @@
 import time
 from time import sleep
 from sh import ssh
+import sh
+from retry import retry
 from txperf.redpanda_cluster import TimeoutException
 
 import logging
@@ -19,16 +21,20 @@ class KafkaCluster:
                 parts = line.split(" ")
                 self.nodes.append(KafkaNode(parts[0]))
     
+    @retry(sh.ErrorReturnCode_255, tries=5, delay=0.2)
     def launch(self, node):
         ssh("ubuntu@" + node.ip, "/mnt/vectorized/control/kafka.start.sh")
     
+    @retry(sh.ErrorReturnCode_255, tries=5, delay=0.2)
     def is_alive(self, node):
         result = ssh("ubuntu@" + node.ip, "/mnt/vectorized/control/kafka.alive.sh")
         return "YES" in result
     
+    @retry(sh.ErrorReturnCode_255, tries=5, delay=0.2)
     def kill(self, node):
         ssh("ubuntu@" + node.ip, "/mnt/vectorized/control/kafka.stop.sh")
 
+    @retry(sh.ErrorReturnCode_255, tries=5, delay=0.2)
     def clean(self, node):
         ssh("ubuntu@" + node.ip, "/mnt/vectorized/control/kafka.clean.sh")
     
@@ -72,5 +78,6 @@ class KafkaCluster:
     def brokers(self):
         return ",".join(map(lambda x: x.ip+":9092", self.nodes))
     
+    @retry(sh.ErrorReturnCode_255, tries=5, delay=0.2)
     def create_topic(self, topic, replication, partitions):
         ssh("ubuntu@" + self.nodes[0].ip, "rpk", "topic", "create", "--brokers", self.brokers(), topic, "-r", replication, "-p", partitions)
