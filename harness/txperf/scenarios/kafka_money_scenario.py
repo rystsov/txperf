@@ -224,9 +224,9 @@ class KafkaMoneyScenario:
 
         logger.info(f"launching workload service")
         self.workload_cluster.launch_everywhere()
-        self.workload_cluster.wait_alive(timeout_s=10)
+        self.workload_cluster.wait_alive(timeout_s=40)
         sleep(10)
-        self.workload_cluster.wait_ready(timeout_s=20)
+        self.workload_cluster.wait_ready(timeout_s=80)
 
         for node in self.workload_cluster.nodes:
             logger.info(f"init workload with brokers=\"{self.redpanda_cluster.brokers()}\" and accounts=\"{accounts}\" on {node.ip}")
@@ -239,7 +239,7 @@ class KafkaMoneyScenario:
         ### distributing internal and data topic across different nodes
         
         logger.info(f"waiting for progress")
-        self.workload_cluster.wait_progress(timeout_s=20)
+        self.workload_cluster.wait_progress(timeout_s=80)
         
         logger.info(f"warming up for 60s")
         sleep(60)

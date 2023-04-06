@@ -240,7 +240,7 @@ class RedpandaMoneyScenario:
         ### distributing internal and data topic across different nodes
         
         logger.info(f"waiting for progress")
-        self.workload_cluster.wait_progress(timeout_s=20)
+        self.workload_cluster.wait_progress(timeout_s=80)
         
         logger.info(f"warming up for 60s")
         sleep(60)
