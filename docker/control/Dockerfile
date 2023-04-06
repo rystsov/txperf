@@ -28,6 +28,7 @@ RUN pip3 install sh
 RUN pip3 install flask
 RUN pip3 install pyyaml
 RUN pip3 install confluent_kafka
+RUN pip3 install retry
 COPY harness /mnt/vectorized/harness
 COPY suites /mnt/vectorized/suites
 CMD /mnt/vectorized/entrypoint.sh
