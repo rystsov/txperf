@@ -28,7 +28,10 @@
   tasks:
     - become_user: ubuntu
       shell: |
-        git clone https://github.com/ZeDRoman/txperf.git
+        git clone https://github.com/rystsov/txperf
+        pushd txperf
+        git checkout node6
+        popd
 
 - name: clone keys & host.ini
   hosts: control
