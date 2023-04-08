@@ -28,10 +28,7 @@
   tasks:
     - become_user: ubuntu
       shell: |
-        git clone https://github.com/rystsov/txperf
-        pushd txperf
-        git checkout node6
-        popd
+        git clone https://github.com/rystsov/txperf --branch node6
 
 - name: clone keys & host.ini
   hosts: control
