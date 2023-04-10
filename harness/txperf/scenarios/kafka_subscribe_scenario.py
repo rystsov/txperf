@@ -232,7 +232,7 @@ class KafkaSubscribeScenario:
         logger.info(f"starting filling workload on {node.ip}")
         self.workload_cluster.start_filling(node)
         logger.info(f"waiting until filled")
-        self.workload_cluster.wait_filled(node, count=4*60*250, timeout_s=4*60)
+        self.workload_cluster.wait_filled(node, count=4*60*250, timeout_s=10*60)
         logger.info(f"stopping filling")
         self.workload_cluster.stop_filling(node, timeout_s=60)
         logger.info(f"filling is stopped")
