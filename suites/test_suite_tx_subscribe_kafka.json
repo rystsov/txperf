@@ -2,17 +2,15 @@
     "name": "all",
     "tests": [
         "tx_subscribe/kafka_1.json",
-        "tx_subscribe/kafka_2.json",
         "tx_subscribe/kafka_4.json",
-        "tx_subscribe/kafka_8.json",
         "tx_subscribe/kafka_10.json",
-        "tx_subscribe/kafka_16.json",
         "tx_subscribe/kafka_20.json",
-        "tx_subscribe/kafka_30.json",
         "tx_subscribe/kafka_40.json",
-        "tx_subscribe/kafka_50.json",
         "tx_subscribe/kafka_60.json",
-        "tx_subscribe/kafka_64.json"
+        "tx_subscribe/kafka_80.json",
+        "tx_subscribe/kafka_120.json",
+        "tx_subscribe/kafka_160.json",
+        "tx_subscribe/kafka_200.json"
     ],
     "settings": {
         "remove_logs_on_success": true,
