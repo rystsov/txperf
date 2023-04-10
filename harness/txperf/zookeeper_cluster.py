@@ -1,4 +1,6 @@
 import time
+import sh
+from retry import retry
 from time import sleep
 from sh import ssh
 from txperf.redpanda_cluster import TimeoutException
@@ -19,16 +21,20 @@ class ZookeeperCluster:
                 parts = line.split(" ")
                 self.nodes.append(ZookeeperNode(parts[0]))
     
+    @retry(sh.ErrorReturnCode_255, tries=5, delay=0.2)
     def launch(self, node):
         ssh("ubuntu@" + node.ip, "/mnt/vectorized/control/zookeeper.start.sh")
     
+    @retry(sh.ErrorReturnCode_255, tries=5, delay=0.2)
     def is_alive(self, node):
         result = ssh("ubuntu@" + node.ip, "/mnt/vectorized/control/zookeeper.alive.sh")
         return "YES" in result
     
+    @retry(sh.ErrorReturnCode_255, tries=5, delay=0.2)
     def kill(self, node):
         ssh("ubuntu@" + node.ip, "/mnt/vectorized/control/zookeeper.stop.sh")
 
+    @retry(sh.ErrorReturnCode_255, tries=5, delay=0.2)
     def clean(self, node):
         ssh("ubuntu@" + node.ip, "/mnt/vectorized/control/zookeeper.clean.sh")
     

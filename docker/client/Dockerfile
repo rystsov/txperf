@@ -24,6 +24,7 @@ RUN systemctl disable wasm_engine
 RUN pip3 install sh
 RUN pip3 install flask
 RUN pip3 install confluent_kafka
+RUN pip3 install retry
 RUN mkdir -p /mnt/vectorized/workloads
 COPY workloads /mnt/vectorized/workloads
 RUN cd /mnt/vectorized/workloads && \

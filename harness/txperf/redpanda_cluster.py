@@ -2,6 +2,8 @@ import time
 import requests
 from time import sleep
 from sh import ssh
+import sh
+from retry import retry
 import sys
 import traceback
 
@@ -31,20 +33,25 @@ class RedpandaCluster:
                 parts = line.split(" ")
                 self.nodes.append(RedpandaNode(parts[0], int(parts[1])))
     
+    @retry(sh.ErrorReturnCode_255, tries=5, delay=0.2)
     def heal(self):
         for node in self.nodes:
             ssh("ubuntu@" + node.ip, "/mnt/vectorized/control/network.heal.all.sh")
 
+    @retry(sh.ErrorReturnCode_255, tries=5, delay=0.2)
     def launch(self, node):
         ssh("ubuntu@" + node.ip, "/mnt/vectorized/control/redpanda.start.sh")
     
+    @retry(sh.ErrorReturnCode_255, tries=5, delay=0.2)
     def is_alive(self, node):
         result = ssh("ubuntu@" + node.ip, "/mnt/vectorized/control/redpanda.alive.sh")
         return "YES" in result
     
+    @retry(sh.ErrorReturnCode_255, tries=5, delay=0.2)
     def kill(self, node):
         ssh("ubuntu@" + node.ip, "/mnt/vectorized/control/redpanda.stop.sh")
 
+    @retry(sh.ErrorReturnCode_255, tries=5, delay=0.2)
     def clean(self, node):
         ssh("ubuntu@" + node.ip, "/mnt/vectorized/control/redpanda.clean.sh")
     
