@@ -1,0 +1,17 @@
+{
+    "name": "tx-subscribe / redpanda / 140",
+    "scenario": "redpanda_subscribe_scenario",
+    "group_id": "group1",
+    "source": "source1",
+    "target": "target1",
+    "partitions": 140,
+    "replication": 3,
+    "workload": {
+        "name": "tx-subscribe / java",
+        "checks": [
+            {
+                "name": "stat"
+            }
+        ]
+    }
+}

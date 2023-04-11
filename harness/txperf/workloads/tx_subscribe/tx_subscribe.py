@@ -1,7 +1,6 @@
 from sh import ssh
-from sh import cd
-from sh import mkdir
-from sh import python3
+import sh
+from retry import retry
 import json
 import requests
 import os
@@ -46,19 +45,23 @@ class Workload:
                 parts = line.split(" ")
                 self.nodes.append(RedpandaNode(parts[0], int(parts[1])))
     
+    @retry(sh.ErrorReturnCode_255, tries=5, delay=0.2)
     def heal(self):
         for node in self.nodes:
             ssh("ubuntu@" + node.ip, "/mnt/vectorized/control/network.heal.all.sh")
     
+    @retry(sh.ErrorReturnCode_255, tries=5, delay=0.2)
     def is_alive(self, node):
         ip = node.ip
         result = ssh("ubuntu@"+ip, self.scripts.alive)
         return "YES" in result
     
+    @retry(sh.ErrorReturnCode_255, tries=5, delay=0.2)
     def launch(self, node):
         ip = node.ip
         ssh("ubuntu@"+ip, self.scripts.launch)
     
+    @retry(sh.ErrorReturnCode_255, tries=5, delay=0.2)
     def kill(self, node):
         ip = node.ip
         ssh("ubuntu@"+ip, self.scripts.kill)
